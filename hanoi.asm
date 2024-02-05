@@ -1,5 +1,5 @@
 section .data
-    prompt db "Insira o numero de discos: ", 0
+    prompt db "Insira o num de discos(1-9): ", 0
     moveMsg db "Mover disco da Torre ", 0
     toMsg db " para Torre ", 0
     newline db 0xA, 0
