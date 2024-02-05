@@ -67,7 +67,10 @@ hanoi:
     add esp, 16
 
     ; Mover o disco do pino de origem para o pino de destino
-    ; Código para imprimir o movimento aqui
+    push dword [ebp+20] ; Pino de destino
+    push dword [ebp+12] ; Pino de origem
+    call imprime
+    add esp, 8 ; Ajusta a pilha após a chamada
 
     ; Mover n-1 discos do pino auxiliar para o pino de destino
     push dword [ebp+20]
@@ -76,6 +79,42 @@ hanoi:
     push eax
     call hanoi
     add esp, 16
+
+; Função para imprimir movimentos
+imprime:
+    push ebp
+    mov ebp, esp
+
+    ; Imprime a mensagem de movimento
+    mov eax, 4 ; syscall para sys_write
+    mov ebx, 1 ; stdout
+
+    ; Imprime a torre de origem
+    mov ecx, moveMsg
+    mov edx, 23 ; comprimento da string moveMsg
+    int 0x80
+
+    mov ecx, [ebp+8] ; torre de origem
+    mov edx, 1
+    int 0x80
+
+    ; Imprime ' para Torre '
+    mov ecx, toMsg
+    mov edx, 13 ; comprimento da string toMsg
+    int 0x80
+
+    ; Imprime a torre de destino
+    mov ecx, [ebp+12] ; torre de destino
+    mov edx, 1
+    int 0x80
+
+    ; Imprime uma nova linha
+    mov ecx, newline
+    mov edx, 2
+    int 0x80
+
+    pop ebp
+    ret
 
 fim_hanoi:
     mov esp, ebp
