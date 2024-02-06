@@ -1,122 +1,121 @@
 section .data
-    prompt db "Insira o num de discos(1-9): ", 0
-    moveMsg db "Mover disco da Torre ", 0
-    toMsg db " para Torre ", 0
-    newline db 0xA, 0
+    prompt db "Insira o num de discos(1-9): ", 0  ; 
+    moveMsg db "Mover disco da Torre ", 0         ; 
+    toMsg db " para Torre ", 0                    ; 
+    newline db 0xA, 0                             ; 
 
 section .bss
-    num resb 1
+    num resb 1                                    ; Reserva 1 byte de espaço para armazenar o número de discos
 
 section .text
-global _start
+global _start                                    ; 
 
 _start:
     ; Solicita o número de discos ao usuário
-    mov eax, 4
-    mov ebx, 1
-    mov ecx, prompt
-    mov edx, 29
-    int 0x80
+    mov eax, 4                                    ; syscall para sys_write
+    mov ebx, 1                                    ; define o descritor de arquivo para stdout
+    mov ecx, prompt                               ; endereço da string prompt para ser escrita
+    mov edx, 29                                   ; tamanho da string prompt
+    int 0x80                                      ; executa a syscall
 
     ; Lê o número de discos
-    mov eax, 3
-    mov ebx, 0
-    mov ecx, num
-    mov edx, 1
-    int 0x80
+    mov eax, 3                                    ; syscall para sys_read
+    mov ebx, 0                                    ; define o descritor de arquivo para stdin
+    mov ecx, num                                  ; endereço onde o input será armazenado
+    mov edx, 1                                    ; número de bytes a serem lidos
+    int 0x80                                      ; executa a syscall
 
     ; Converte de ASCII para inteiro
-    movzx eax, byte [num]
-    sub eax, '0'
+    movzx eax, byte [num]                         ; move o byte lido para eax com zero extend
+    sub eax, '0'                                  ; subtrai '0' para converter de ASCII para inteiro
 
     ; Verifica se o número é válido
-    cmp eax, 1
-    jl _exit
-    cmp eax, 9
-    jg _exit
+    cmp eax, 1                                    ; compara se o número é menor que 1
+    jl _exit                                      ; se sim, salta para _exit
+    cmp eax, 9                                    ; compara se o número é maior que 9
+    jg _exit                                      ; se sim, salta para _exit
 
     ; Chama o procedimento recursivo
-    push eax
-    push 'C'
-    push 'B'
-    push 'A'
-    call hanoi
-    add esp, 16
+    push eax                                      ; empilha o número de discos
+    push 'C'                                      ; empilha o identificador do pino destino
+    push 'B'                                      ; empilha o identificador do pino auxiliar
+    push 'A'                                      ; empilha o identificador do pino de origem
+    call hanoi                                    ; chama a função hanoi
+    add esp, 16                                   ; limpa a pilha após a chamada
 
 _exit:
     ; Sai do programa
-    mov eax, 1
-    xor ebx, ebx
-    int 0x80
+    mov eax, 1                                    ; syscall para sys_exit
+    xor ebx, ebx                                  ; define o status de saída como 0
+    int 0x80                                      ; executa a syscall
 
 hanoi:
-    push ebp
-    mov ebp, esp
+    push ebp                                      ; salva o base pointer atual na pilha
+    mov ebp, esp                                  ; atualiza o base pointer para o topo da pilha
 
-    mov eax, [ebp+8]  ; Número de discos
-    cmp eax, 1
-    jle fim_hanoi
+    mov eax, [ebp+8]                              ; move o número de discos para eax
+    cmp eax, 1                                    ; verifica se é o caso base (1 disco)
+    jle fim_hanoi                                 ; se sim, vai para fim_hanoi
 
     ; Mover n-1 discos do pino de origem para o pino auxiliar
-    dec eax
-    push dword [ebp+16]
-    push dword [ebp+12]
-    push dword [ebp+20]
-    push eax
-    call hanoi
-    add esp, 16
+    dec eax                                       ; decrementa eax (n-1)
+    push dword [ebp+16]                           ; empilha pino auxiliar
+    push dword [ebp+12]                           ; empilha pino de destino
+    push dword [ebp+20]                           ; empilha pino de origem
+    push eax                                      ; empilha n-1
+    call hanoi                                    ; chama hanoi recursivamente
+    add esp, 16                                   ; limpa a pilha
 
     ; Mover o disco do pino de origem para o pino de destino
-    push dword [ebp+20] ; Pino de destino
-    push dword [ebp+12] ; Pino de origem
-    call imprime
-    add esp, 8 ; Ajusta a pilha após a chamada
+    push dword [ebp+20]                           ; empilha pino de destino
+    push dword [ebp+12]                           ; empilha pino de origem
+    call imprime                                  ; chama a função para imprimir o movimento
+    add esp, 8                                    ; limpa a pilha
 
     ; Mover n-1 discos do pino auxiliar para o pino de destino
-    push dword [ebp+20]
-    push dword [ebp+12]
-    push dword [ebp+16]
-    push eax
-    call hanoi
-    add esp, 16
+    push dword [ebp+20]                           ; empilha pino de destino
+    push dword [ebp+12]                           ; empilha pino de origem
+    push dword [ebp+16]                           ; empilha pino auxiliar
+    push eax                                      ; empilha n-1
+    call hanoi                                    ; chama hanoi recursivamente
+    add esp, 16                                   ; limpa a pilha
 
-; Função para imprimir movimentos
 imprime:
-    push ebp
-    mov ebp, esp
+    push ebp                                      ; salva o base pointer atual na pilha
+    mov ebp, esp                                  ; atualiza o base pointer para o topo da pilha
 
     ; Imprime a mensagem de movimento
-    mov eax, 4 ; syscall para sys_write
-    mov ebx, 1 ; stdout
+    mov eax, 4                                    ; syscall para sys_write
+    mov ebx, 1                                    ; define o descritor de arquivo para stdout
 
     ; Imprime a torre de origem
-    mov ecx, moveMsg
-    mov edx, 23 ; comprimento da string moveMsg
-    int 0x80
+    mov ecx, moveMsg                              ; endereço da mensagem de movimento
+    mov edx, 23                                   ; comprimento da mensagem de movimento
+    int 0x80                                      ; executa a syscall
 
-    mov ecx, [ebp+8] ; torre de origem
-    mov edx, 1
-    int 0x80
+    mov ecx, [ebp+8]                              ; endereço da torre de origem
+    mov edx, 1                                    ; define o comprimento para 1
+    int 0x80                                      ; executa a syscall
 
     ; Imprime ' para Torre '
-    mov ecx, toMsg
-    mov edx, 13 ; comprimento da string toMsg
-    int 0x80
+    mov ecx, toMsg                                ; endereço da mensagem 'para Torre'
+    mov edx, 13                                   ; comprimento da mensagem 'para Torre'
+    int 0x80                                      ; executa a syscall
 
     ; Imprime a torre de destino
-    mov ecx, [ebp+12] ; torre de destino
-    mov edx, 1
-    int 0x80
+    mov ecx, [ebp+12]                             ; endereço da torre de destino
+    mov edx, 1                                    ; define o comprimento para 1
+    int 0x80                                      ; executa a syscall
 
     ; Imprime uma nova linha
-    mov ecx, newline
-    mov edx, 2
-    int 0x80
+    mov ecx, newline                              ; endereço da quebra de linha
+    mov edx, 2                                    ; define o comprimento para 2
+    int 0x80                                      ; executa a syscall
 
-    pop ebp
-    ret
+    pop ebp                                       ; restaura o base pointer anterior
+    ret                                           ; retorna da função
 
 fim_hanoi:
-    mov esp, ebp
-    pop ebp
-    ret
+    mov esp, ebp                                  ; restaura o stack pointer
+    pop ebp                                       ; restaura o base pointer anterior
+    ret                                           ; retorna da função
